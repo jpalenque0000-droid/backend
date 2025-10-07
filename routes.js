@@ -39,7 +39,7 @@ router.post('/buyusdt', async (req, res) => {
 
 /* 📌 Crear Retiro (Venta) */
 router.post('/sellusdt', async (req, res) => {
-    const { usuarioId, BobExchangeRate, monto, comprobanteUrl, bankAccount, bankName, accountHolder } = req.body;
+    const { usuarioId, BobExchangeRate, monto, comprobanteUrl, bankAccount, bankName, accountHolder, bancoQrUrl = "" } = req.body;
 
     if (!usuarioId || !monto || !comprobanteUrl || !BobExchangeRate || !bankAccount || !bankName || !accountHolder) {
         return res.status(400).json({ error: 'Campos incompletos para el retiro' });
@@ -59,6 +59,7 @@ router.post('/sellusdt', async (req, res) => {
                 titular: accountHolder,
             },
             comprobanteUrl,
+            bancoQrUrl
         });
 
         await retiro.save();
@@ -384,9 +385,20 @@ router.get('/get_user_info', async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        res.json(user);
+        const recargasCount = await Recarga.countDocuments({ usuarioId: user._id });
+        const retirosCount = await Retiro.countDocuments({ usuarioId: user._id });
+        const totalTransacciones = recargasCount + retirosCount;
+
+        res.json({
+            ...user.toObject(),
+            transacciones: {
+                compras: recargasCount,
+                ventas: retirosCount,
+                total: totalTransacciones,
+            },
+        });
     } catch (error) {
-        console.error('Error al verificar token o buscar usuario:', error);
+        console.error('❌ Error al verificar token o buscar usuario:', error);
         res.status(403).json({ error: 'Token inválido o expirado' });
     }
 });

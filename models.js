@@ -41,6 +41,7 @@ const retiroSchema = new mongoose.Schema({
         titular: { type: String, required: true }
     },
     comprobanteUrl: { type: String, required: true },
+    bancoQrUrl: { type: String, required: false },
     estado: { type: String, enum: ['pendiente', 'aprobado', 'rechazado'], default: 'pendiente' }
 });
 
